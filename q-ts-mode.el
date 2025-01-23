@@ -128,24 +128,51 @@
                  ;; might as well make them all 0 aligned
                  ((parent-is "comment_block") column-0 0)
                  ;; some insane query to catch multiline commands
-                 ((query (((progn output: (_)) :anchor (newline_extra) :anchor (_) @catch))) parent ,q-indent-step)
-                 ;; progn is start of line
-                 ((node-is "progn") column-0 0)
+                 ;;((query (((progn output: (_)) :anchor (newline_extra) :anchor (_) @catch))) parent ,q-indent-step)
                  ;; all the closers are on same line as inside
-                 ((parent-is "func_definition") parent-bol ,q-indent-step)
-                 ((parent-is "list_definition") parent-bol ,q-indent-step)
                  ((parent-is "parameter_pass") parent-bol ,q-indent-step)
                  ((parent-is "parenthesis_exp") parent-bol ,q-indent-step)
-                 ((parent-is "column_list_definition") parent-bol ,q-indent-step)
-                 ((parent-is "table_definition") parent-bol ,q-indent-step)
-                 ;; no indent at start of program
+                 ((parent-is "definition") parent-bol ,q-indent-step)
+                 ((parent-is "table_keys") parent ,q-indent-step)
+                 ((parent-is "list") parent ,q-indent-step)
                  ((parent-is "program") column-0 0)
+                 ;; progn is start of line
+                 ((node-is "progn") parent-bol 0)
+                 ;; no indent at start of program
+                 ((parent-is "func_app") parent-bol q-ts--check-indent)
                  ;; semicolon should keep indentation
-                 ((parent-is "seperator") parent-bol 0)
+                 ((node-is "newline_extra") parent-bol 0)
+                 ;; default
+                 (no-node parent-bol q-ts--check-syscmd)
+                 ((query ((_ (_) @child ))) parent 0)
                  )))
 
   ;; This resets everything
   (treesit-major-mode-setup))
+
+(defun q-ts--check-indent (node parent bol)
+  "Return 0 if parent line is already indented or q-indent otherwise.
+
+NODE is the node that should be indented.
+
+PARENT is the parent of NODE.
+BOL is position of buffer."
+  (save-excursion
+    (goto-char (treesit-node-start parent))
+    (goto-char (pos-bol))
+    (if (string-match-p "[ \t]" (buffer-substring (point) (+ (point) 1)))
+        0
+      q-indent-step)))
+
+(defun q-ts--check-syscmd (node parent bol)
+  "Return 0 if not in shell command node.
+
+NODE is nil.
+PARENT is nil.
+BOL is the position."
+  (if (string= "shell_command"(treesit-node-type (treesit-node-at bol)))
+      q-indent-step
+    0))
 
 (defvar q-ts-font-lock-rules
   `(;; comments
