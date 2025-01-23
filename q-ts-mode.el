@@ -1,6 +1,6 @@
 ;;; q-ts-mode.el --- Treesitter q mode
 
-;;; Code
+;;; Code:
 
 (require 'q-mode)
 (require 'treesit)
@@ -151,7 +151,7 @@
   (treesit-major-mode-setup))
 
 (defun q-ts--check-indent (node parent bol)
-  "Return 0 if parent line is already indented or q-indent otherwise.
+  "Return 0 if parent line is already indented or `q-indent-step' otherwise.
 
 NODE is the node that should be indented.
 
@@ -165,7 +165,7 @@ BOL is position of buffer."
       q-indent-step)))
 
 (defun q-ts--check-syscmd (node parent bol)
-  "Return 0 if not in shell command node.
+  "Return 0 if not in shell command node else return `q-indent-step'.
 
 NODE is nil.
 PARENT is nil.
@@ -294,7 +294,7 @@ BOL is the position."
       function:  (assignment_func)  @font-lock-operator-face
       parameters: (parameter_pass :anchor
                    (variable) @font-lock-function-name-face
-                   :anchor (seperator) :anchor
+                   :anchor (semicolon) :anchor
                    (func_definition) :anchor))
      ((func_app
       parameter1: (variable) @font-lock-variable-name-face
@@ -305,7 +305,7 @@ BOL is the position."
        function: (assignment_func)  @font-lock-operator-face
        parameters: (parameter_pass :anchor
                     (variable) @font-lock-variable-name-face
-                    :anchor (seperator) :anchor
+                    :anchor (semicolon) :anchor
                     (_) @value :anchor))
       (:pred q-ts--not-func @value)))
 
@@ -318,8 +318,8 @@ BOL is the position."
       (:pred q-ts--anti-assignment @underline)))
     ))
 
-(setq treesit--font-lock-verbose nil)
-(setq treesit--indent-verbose t)
+(setq treesit--font-lock-verbose t)
+(setq treesit--indent-verbose nil)
 
 (provide 'q-ts-mode)
 ;;; q-ts-mode.el ends here
