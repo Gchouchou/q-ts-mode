@@ -1,5 +1,9 @@
 ;;; q-ts-mode.el --- Treesitter q mode
 
+;;; Commentary:
+
+;;; q-mode but using treesitter grammar
+
 ;;; Code:
 
 (require 'q-mode)
@@ -320,6 +324,57 @@ BOL is the position."
 
 (setq treesit--font-lock-verbose t)
 (setq treesit--indent-verbose nil)
+
+(defun q-ts-strip (text)
+  "Strip TEXT of all comments, collapse expressions.
+Analog to `q-strip' but leverages treesitter."
+  (with-temp-buffer
+    (delete-region (point-min) (point-max))
+    (insert text)
+    (let* ((shift 0)
+           (capture (treesit-query-capture
+                     (treesit-buffer-root-node 'q)
+                     (eval-when-compile
+                       (treesit-query-compile
+                        'q
+                        '((comment) @comment
+                          (comment_block) @comment_block
+                          (newline_extra) @newline_extra
+                          (shebang) @shebang)))
+                     nil
+                     nil
+                     t))
+           (bounds (mapcar
+                    (lambda (node)
+                      (cons (treesit-node-start node) (treesit-node-end node)))
+                    capture)))
+      (mapc (lambda (bound)
+              (message (buffer-substring (car bound) (cdr bound)))
+              (delete-region (- (car bound) shift)
+                             (- (cdr bound) shift))
+              (setq shift (- (cdr bound) (car bound))))
+            bounds))
+    ;; do regex substitution
+    ;; We can do string literals by capturing all strings
+    (replace-regexp-in-region "[ \t]*\n?[ \t]+" " " (point-min) (point-max))
+    (replace-regexp-in-region "[ \t]+$" "" (point-min) (point-max))
+    (replace-regexp-in-region "^[ \t]+" "" (point-min) (point-max))
+    (buffer-string)))
+
+;; override q-strip
+(advice-add 'q-strip :override #'q-ts-strip)
+
+(defun q-ts-eval-extended-line ()
+  "Send the full abstracted line to the inferior q[con] process."
+  (interactive)
+  (let ((node (treesit-parent-until
+         (treesit-node-at (point))
+         (lambda (node)
+           (string-match-p "^\\(system_command\\|progn\\)$" node))
+         t)))
+    (if node
+        (q-eval-region (treesit-node-start node) (treesit-node-end node))
+      (error "No extended line expression found"))))
 
 (provide 'q-ts-mode)
 ;;; q-ts-mode.el ends here
