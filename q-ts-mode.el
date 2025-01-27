@@ -5,7 +5,6 @@
 ;;; q-mode but using treesitter grammar
 
 ;;; Code:
-
 (require 'q-mode)
 (require 'treesit)
 
@@ -99,14 +98,6 @@
   "Anti match NODE type with func_definition."
   (not (string= "func_definition" (treesit-node-type node))))
 
-;;;###autoload
-(define-derived-mode q-ts-mode prog-mode "Q Script[ts]"
-  "Major Mode for editing q scripts with tree-sitter."
-  :syntax-table q-mode-syntax-table
-  (setq-local font-lock-defaults nil)
-  (when (treesit-ready-p 'q)
-    (treesit-parser-create 'q)
-    (q-ts-setup)))
 
 ;; rerun this if it doesn't work
 (defun q-ts-setup ()
@@ -123,7 +114,7 @@
   (setq-local treesit-font-lock-feature-list
               '(( comment string ) ( constant number builtin keyword )
                 ( parameter command q-constant function-call escape-char operator infix-mod )
-                ( local-variable invalid output assignment )))
+                ( local-variable invalid assignment )))
 
   ;; indentation rules
   (setq-local treesit-simple-indent-rules
@@ -314,22 +305,21 @@ BOL is the position."
       (:pred q-ts--not-func @value)))
 
     ;; last expression in progn but does not match assignment
-    :language q
-    :feature output
-    :override append
-    (((progn
-       output: (_) @underline)
-      (:pred q-ts--anti-assignment @underline)))
+    ;; :language q
+    ;; :feature output
+    ;; :override append
+    ;; (((progn
+    ;;    output: (_) @underline)
+    ;;   (:pred q-ts--anti-assignment @underline)))
     ))
 
-(setq treesit--font-lock-verbose t)
-(setq treesit--indent-verbose nil)
+;; (setq treesit--font-lock-verbose t)
+;; (setq treesit--indent-verbose nil)
 
 (defun q-ts-strip (text)
   "Strip TEXT of all comments, collapse expressions.
 Analog to `q-strip' but leverages treesitter."
   (with-temp-buffer
-    (delete-region (point-min) (point-max))
     (insert text)
     (let* ((shift 0)
            (capture (treesit-query-capture
@@ -375,6 +365,21 @@ Analog to `q-strip' but leverages treesitter."
     (if node
         (q-eval-region (treesit-node-start node) (treesit-node-end node))
       (error "No extended line expression found"))))
+
+(defvar q-ts-mode-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map q-mode-map)
+    (define-key map "\C-c\C-e" 'q-ts-eval-extended-line)
+    map))
+
+;;;###autoload
+(define-derived-mode q-ts-mode prog-mode "Q Script[ts]"
+  "Major Mode for editing q scripts with tree-sitter."
+  :syntax-table q-mode-syntax-table
+  (setq-local font-lock-defaults nil)
+  (when (treesit-ready-p 'q)
+    (treesit-parser-create 'q)
+    (q-ts-setup)))
 
 (provide 'q-ts-mode)
 ;;; q-ts-mode.el ends here
