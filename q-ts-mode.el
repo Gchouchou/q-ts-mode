@@ -1,8 +1,8 @@
-;;; q-ts-mode.el --- Treesitter q mode
+;;; q-ts-mode.el --- Tree-sitter q mode
 
 ;;; Commentary:
 
-;;; q-mode but using treesitter grammar
+;;; q-mode but using tree-sitter grammar
 
 ;;; Code:
 (require 'q-mode)
@@ -318,7 +318,7 @@ BOL is the position."
 
 (defun q-ts-strip (text)
   "Strip TEXT of all comments, collapse expressions.
-Analog to `q-strip' but leverages treesitter."
+Analog to `q-strip' but leverages tree-sitter."
   (with-temp-buffer
     (insert text)
     (let* ((shift 0)
@@ -339,7 +339,6 @@ Analog to `q-strip' but leverages treesitter."
                       (cons (treesit-node-start node) (treesit-node-end node)))
                     capture)))
       (mapc (lambda (bound)
-              (message (buffer-substring (car bound) (cdr bound)))
               (delete-region (- (car bound) shift)
                              (- (cdr bound) shift))
               (setq shift (- (cdr bound) (car bound))))
@@ -355,16 +354,20 @@ Analog to `q-strip' but leverages treesitter."
 (advice-add 'q-strip :override #'q-ts-strip)
 
 (defun q-ts-eval-extended-line ()
-  "Send the full abstracted line to the inferior q[con] process."
+  "Send the full line to the inferior q[con] process using tree-sitter."
   (interactive)
   (let ((node (treesit-parent-until
          (treesit-node-at (point))
          (lambda (node)
-           (string-match-p "^\\(system_command\\|progn\\)$" node))
+           (string= "program"
+                    (treesit-node-type (treesit-node-parent node))))
          t)))
-    (if node
+    (if (and node (string-match-p "^\\(progn\\|system_command\\)$"
+                                  (treesit-node-type node)))
         (q-eval-region (treesit-node-start node) (treesit-node-end node))
       (error "No extended line expression found"))))
+
+;;TODO maybe override eval thing at point and eval function
 
 (defvar q-ts-mode-map
   (let ((map (make-sparse-keymap)))
