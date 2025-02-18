@@ -19,14 +19,14 @@ for a table column name completion.
 To override `q-mode` with `q-ts-mode` you can add the following for the init file.
 
 ``` emacs-lisp
-(add-to-list 'auto-mode-alist '("\\.[kq]\\'" . q-ts-mode))
+(add-to-list 'auto-mode-alist '("\\.q\\'" . q-ts-mode))
 ```
 
 You can also use `major-mode-remap-alist`:
 
 ``` emacs-lisp
 (setq major-mode-remap-alist
-      '((q-mode .  q-ts-mode)))
+      '((q-mode . q-ts-mode)))
 ```
 
 If you are also using the [ob-q](https://github.com/Gchouchou/ob-q) package,
