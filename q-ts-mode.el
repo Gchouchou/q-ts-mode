@@ -98,77 +98,6 @@
   "Anti match NODE type with func_definition."
   (not (string= "func_definition" (treesit-node-type node))))
 
-
-;; rerun this if it doesn't work
-(defun q-ts-setup ()
-  "Setup treesit for q-ts-mode."
-  (interactive)
-  ;; tree-sitter setup
-
-  ;; first handle font lock
-  (setq-local treesit-font-lock-settings
-              (apply #'treesit-font-lock-rules
-                     q-ts-font-lock-rules))
-
-  ;; we need to define levels ourselves
-  (setq-local treesit-font-lock-feature-list
-              '(( comment string ) ( constant number builtin keyword )
-                ( parameter command q-constant function-call escape-char operator infix-mod )
-                ( local-variable invalid assignment )))
-
-  ;; indentation rules
-  (setq-local treesit-simple-indent-rules
-              `((q
-                 ;; last comment block has to be 0 aligned
-                 ;; might as well make them all 0 aligned
-                 ((parent-is "comment_block") column-0 0)
-                 ;; some insane query to catch multiline commands
-                 ;;((query (((progn output: (_)) :anchor (newline_extra) :anchor (_) @catch))) parent ,q-indent-step)
-                 ;; all the closers are on same line as inside
-                 ((parent-is "parameter_pass") parent-bol ,q-indent-step)
-                 ((parent-is "parenthesis_exp") parent-bol ,q-indent-step)
-                 ((parent-is "definition") parent-bol ,q-indent-step)
-                 ((parent-is "table_keys") parent ,q-indent-step)
-                 ((parent-is "list") parent ,q-indent-step)
-                 ((parent-is "program") column-0 0)
-                 ;; progn is start of line
-                 ((node-is "progn") parent-bol 0)
-                 ;; no indent at start of program
-                 ((parent-is "func_app") parent-bol q-ts--check-indent)
-                 ;; semicolon should keep indentation
-                 ((node-is "newline_extra") parent-bol 0)
-                 ;; default
-                 (no-node parent-bol q-ts--check-syscmd)
-                 ((query ((_ (_) @child ))) parent 0)
-                 )))
-
-  ;; This resets everything
-  (treesit-major-mode-setup))
-
-(defun q-ts--check-indent (node parent bol)
-  "Return 0 if parent line is already indented or `q-indent-step' otherwise.
-
-NODE is the node that should be indented.
-
-PARENT is the parent of NODE.
-BOL is position of buffer."
-  (save-excursion
-    (goto-char (treesit-node-start parent))
-    (goto-char (pos-bol))
-    (if (string-match-p "[ \t]" (buffer-substring (point) (+ (point) 1)))
-        0
-      q-indent-step)))
-
-(defun q-ts--check-syscmd (node parent bol)
-  "Return 0 if not in shell command node else return `q-indent-step'.
-
-NODE is nil.
-PARENT is nil.
-BOL is the position."
-  (if (string= "shell_command"(treesit-node-type (treesit-node-at bol)))
-      q-indent-step
-    0))
-
 (defvar q-ts-font-lock-rules
   `(;; comments
     :language q
@@ -313,8 +242,75 @@ BOL is the position."
     ;;   (:pred q-ts--anti-assignment @underline)))
     ))
 
-;; (setq treesit--font-lock-verbose t)
-;; (setq treesit--indent-verbose nil)
+;; rerun this if it doesn't work
+(defun q-ts-setup ()
+  "Setup treesit for q-ts-mode."
+  (interactive)
+  ;; tree-sitter setup
+
+  ;; first handle font lock
+  (setq-local treesit-font-lock-settings
+              (apply #'treesit-font-lock-rules
+                     q-ts-font-lock-rules))
+
+  ;; we need to define levels ourselves
+  (setq-local treesit-font-lock-feature-list
+              '(( comment string ) ( constant number builtin keyword )
+                ( parameter command q-constant function-call escape-char operator infix-mod )
+                ( local-variable invalid assignment )))
+
+  ;; indentation rules
+  (setq-local treesit-simple-indent-rules
+              `((q
+                 ;; last comment block has to be 0 aligned
+                 ;; might as well make them all 0 aligned
+                 ((parent-is "comment_block") column-0 0)
+                 ;; some insane query to catch multiline commands
+                 ;;((query (((progn output: (_)) :anchor (newline_extra) :anchor (_) @catch))) parent ,q-indent-step)
+                 ;; all the closers are on same line as inside
+                 ((parent-is "parameter_pass") parent-bol ,q-indent-step)
+                 ((parent-is "parenthesis_exp") parent-bol ,q-indent-step)
+                 ((parent-is "definition") parent-bol ,q-indent-step)
+                 ((parent-is "table_keys") parent ,q-indent-step)
+                 ((parent-is "list") parent ,q-indent-step)
+                 ((parent-is "program") column-0 0)
+                 ;; progn is start of line
+                 ((node-is "progn") parent-bol 0)
+                 ;; no indent at start of program
+                 ((parent-is "func_app") parent-bol q-ts--check-indent)
+                 ;; semicolon should keep indentation
+                 ((node-is "newline_extra") parent-bol 0)
+                 ;; default
+                 (no-node parent-bol q-ts--check-syscmd)
+                 ((query ((_ (_) @child ))) parent 0)
+                 )))
+
+  ;; This resets everything
+  (treesit-major-mode-setup))
+
+(defun q-ts--check-indent (node parent bol)
+  "Return 0 if parent line is already indented or `q-indent-step' otherwise.
+
+NODE is the node that should be indented.
+
+PARENT is the parent of NODE.
+BOL is position of buffer."
+  (save-excursion
+    (goto-char (treesit-node-start parent))
+    (goto-char (pos-bol))
+    (if (string-match-p "[ \t]" (buffer-substring (point) (+ (point) 1)))
+        0
+      q-indent-step)))
+
+(defun q-ts--check-syscmd (node parent bol)
+  "Return 0 if not in shell command node else return `q-indent-step'.
+
+NODE is nil.
+PARENT is nil.
+BOL is the position."
+  (if (string= "shell_command"(treesit-node-type (treesit-node-at bol)))
+      q-indent-step
+    0))
 
 (defun q-ts-strip (text)
   "Strip TEXT of all comments, collapse expressions.
@@ -385,4 +381,5 @@ Analog to `q-strip' but leverages tree-sitter."
     (q-ts-setup)))
 
 (provide 'q-ts-mode)
+
 ;;; q-ts-mode.el ends here
