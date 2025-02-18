@@ -378,7 +378,9 @@ Analog to `q-strip' but leverages tree-sitter."
   (setq-local font-lock-defaults nil)
   (when (treesit-ready-p 'q)
     (treesit-parser-create 'q)
-    (q-ts-setup)))
+    (q-ts-setup))
+  ;; Do not edit k files with treesitter mode
+  (add-to-list 'auto-mode-alist '("\\.q\\'" . q-ts-mode)))
 
 (provide 'q-ts-mode)
 
