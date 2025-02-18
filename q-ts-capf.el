@@ -37,7 +37,7 @@ Calls DEFAULT if there are no matches."
 (advice-add 'q-capf--bounds :around 'q-ts-capf--bounds)
 
 (defun q-ts-table-col-capf ()
-  "Completion at point for table column names"
+  "Completion at point for table column names."
   (when (and (hash-table-p q-capf-session-vars)
              ;; do not trigger inside comments and strings
              (not (nth 3 (syntax-ppss)))
@@ -93,7 +93,7 @@ Calls DEFAULT if there are no matches."
           (list
            (car bounds)
            (cdr bounds)
-           (append columns nil)
+           columns
            :exclusive 'no
            :annotation-function
            (lambda (col) " table column")
