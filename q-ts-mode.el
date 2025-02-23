@@ -326,7 +326,8 @@ Analog to `q-strip' but leverages tree-sitter."
                         '((comment) @comment
                           (comment_block) @comment_block
                           (newline_extra) @newline_extra
-                          (shebang) @shebang)))
+                          (shebang) @shebang)
+                        t))
                      nil
                      nil
                      t))
