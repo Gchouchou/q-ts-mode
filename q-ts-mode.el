@@ -350,6 +350,11 @@ Analog to `q-strip' but leverages tree-sitter."
           ;; leave one space
           (delete-region (- (point) space-count -1)
                          (point)))))
+    ;; delete trailing white spaces
+    (goto-char (point-max))
+    (delete-blank-lines)
+    (while (eq (char-before) ?\n)
+      (delete-char -1))
     (buffer-string)))
 
 ;; override q-strip
