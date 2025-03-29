@@ -338,7 +338,7 @@ Analog to `q-strip' but leverages tree-sitter."
       (mapc (lambda (bound)
               (delete-region (- (car bound) shift)
                              (- (cdr bound) shift))
-              (setq shift (- (cdr bound) (car bound))))
+              (setq shift (+ shift (- (cdr bound) (car bound)))))
             bounds))
     ;; do regex substitution
     ;; We can do string literals by capturing all strings
