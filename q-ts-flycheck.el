@@ -29,18 +29,23 @@ and gather the results."
                    (treesit-query-compile
                     'q
                     '((ERROR) @error
-                      (invalid_atom) @invalid)))))
+                      (invalid_atom) @invalid
+                      (infix_projection) @infix_projection)))))
     (mapcar (lambda (match)
               (let* ((group (car match))
                      (node (cdr match))
                      (start (treesit-node-start node))
                      (end (treesit-node-end node))
-                     (level 'error)
+                     (level (pcase group
+                              ('infix_projection 'warning)
+                              (_ 'error)))
                      (linter-message (pcase group
                                        ('error "Syntax error")
-                                       ('invalid "Invalid atomic expression"))))
+                                       ('invalid "Invalid atomic expression")
+                                       ('infix_projection "Infix projection is not recommended"))))
                 (flycheck-error-new-at-pos start level linter-message)))
             capture)))
+
 
 (flycheck-define-generic-checker 'q-ts-checker
   "A flycheck checker for q powered by treesitter"
