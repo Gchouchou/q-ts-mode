@@ -340,11 +340,16 @@ Analog to `q-strip' but leverages tree-sitter."
                              (- (cdr bound) shift))
               (setq shift (+ shift (- (cdr bound) (car bound)))))
             bounds))
-    ;; do regex substitution
-    ;; We can do string literals by capturing all strings
-    (replace-regexp-in-region "[ \t]*\n?[ \t]+" " " (point-min) (point-max))
-    (replace-regexp-in-region "[ \t]+$" "" (point-min) (point-max))
-    (replace-regexp-in-region "^[ \t]+" "" (point-min) (point-max))
+    ;; do regex substitution of superfluous spaces
+    (goto-char (point-min))
+    (while (re-search-forward "[ \t]\\{2,\\}" nil t)
+      (let* ((space-count (length (match-string 0)))
+             ;; move backwards one space for better position
+             (node (treesit-node-at (- (point) 1) 'q)))
+        (unless (string= "string_fragment" (treesit-node-type node))
+          ;; leave one space
+          (delete-region (- (point) space-count -1)
+                         (point)))))
     (buffer-string)))
 
 ;; override q-strip
