@@ -26,11 +26,13 @@ and gather the results."
   "Find all error and invalid atom nodes in parse tree."
   (let* ((capture (treesit-query-capture
                    (treesit-buffer-root-node 'q)
-                   (treesit-query-compile
-                    'q
-                    '((ERROR) @error
-                      (invalid_atom) @invalid
-                      (infix_projection) @infix_projection)))))
+                   (eval-when-compile
+                     (treesit-query-compile
+                      'q
+                      '((ERROR) @error
+                        (invalid_atom) @invalid
+                        (infix_projection) @infix_projection)
+                      t)))))
     (mapcar (lambda (match)
               (let* ((group (car match))
                      (node (cdr match))
