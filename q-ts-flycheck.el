@@ -43,7 +43,7 @@ and gather the results."
                                        ('error "Syntax error")
                                        ('invalid "Invalid atomic expression")
                                        ('infix_projection "Infix projection is not recommended"))))
-                (flycheck-error-new-at-pos start level linter-message)))
+                (flycheck-error-new-at-pos start level linter-message :end-pos end)))
             capture)))
 
 
