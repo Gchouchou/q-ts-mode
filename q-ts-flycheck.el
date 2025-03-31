@@ -11,11 +11,12 @@
 
 (defvar q-ts-flycheck-linters
   (list #'q-ts-flycheck-errors-and-invalid-atoms)
-  "List of linter functions")
+  "List of q-ts linter functions.")
 
 (defun q-ts-flycheck-run-linters (checker callback)
-  "Run all linter functions in `q-ts-flycheck-linters'
-and gather the results."
+  "Funcall CALLBACK with results from linter functions in `q-ts-flycheck-linters'.
+
+CHECKER is not used."
   (funcall callback 'finished
            (apply #'append
                   (mapcar (lambda (funcname)
@@ -31,7 +32,8 @@ and gather the results."
                       'q
                       '((ERROR) @error
                         (invalid_atom) @invalid
-                        (infix_projection) @infix_projection)
+                        (infix_projection) @infix_projection
+                        (implicit_composition) @implicit_composition)
                       t)))))
     (mapcar (lambda (match)
               (let* ((group (car match))
@@ -39,12 +41,14 @@ and gather the results."
                      (start (treesit-node-start node))
                      (end (treesit-node-end node))
                      (level (pcase group
+                              ('implicit_composition 'warning)
                               ('infix_projection 'warning)
                               (_ 'error)))
                      (linter-message (pcase group
                                        ('error "Syntax error")
                                        ('invalid "Invalid atomic expression")
-                                       ('infix_projection "Infix projection is not recommended"))))
+                                       ('infix_projection "Infix projection is not recommended")
+                                       ('implicit_composition "Implicit composition is not recommended"))))
                 (flycheck-error-new-at-pos start level linter-message :end-pos end)))
             capture)))
 
