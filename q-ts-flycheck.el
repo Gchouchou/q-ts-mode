@@ -27,14 +27,13 @@ CHECKER is not used."
   "Find all error and invalid atom nodes in parse tree."
   (let* ((capture (treesit-query-capture
                    (treesit-buffer-root-node 'q)
-                   (eval-when-compile
-                     (treesit-query-compile
-                      'q
-                      '((ERROR) @error
-                        (invalid_atom) @invalid
-                        (infix_projection) @infix_projection
-                        (implicit_composition) @implicit_composition)
-                      t)))))
+                   (treesit-query-compile
+                    'q
+                    '((ERROR) @error
+                      (invalid_atom) @invalid
+                      (infix_projection) @infix_projection
+                      (implicit_composition) @implicit_composition)
+                    t))))
     (mapcar (lambda (match)
               (let* ((group (car match))
                      (node (cdr match))
