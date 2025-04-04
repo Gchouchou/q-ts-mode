@@ -198,13 +198,7 @@
     :language q
     :feature invalid
     :override t
-    ((invalid_atom) @font-lock-warning-face
-     ((variable) @font-lock-warning-face
-      (:match ,(format
-                "^%s$"
-                (regexp-opt
-                 '("select" "exec" "from" "by" "update" "delete")))
-              @font-lock-warning-face)))
+    ((invalid_atom) @font-lock-warning-face)
 
     ;; highlighting on function and variable assignment
     ;; this is pretty useless
