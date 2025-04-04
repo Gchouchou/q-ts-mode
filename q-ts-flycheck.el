@@ -30,6 +30,7 @@ CHECKER is not used."
                    (treesit-query-compile
                     'q
                     '((ERROR) @error
+                      (MISSING) @missing
                       (invalid_atom) @invalid
                       (infix_projection) @infix_projection
                       (implicit_composition) @implicit_composition)
@@ -45,6 +46,7 @@ CHECKER is not used."
                               (_ 'error)))
                      (linter-message (pcase group
                                        ('error "Syntax error")
+                                       ('missing (format "Missing %s node" (treesit-node-type node)))
                                        ('invalid "Invalid atomic expression")
                                        ('infix_projection "Infix projection is not recommended")
                                        ('implicit_composition "Implicit composition is not recommended"))))
