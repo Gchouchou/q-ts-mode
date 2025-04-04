@@ -320,14 +320,13 @@ Analog to `q-strip' but leverages tree-sitter."
     (let* ((shift 0)
            (capture (treesit-query-capture
                      (treesit-buffer-root-node 'q)
-                     (eval-when-compile
-                       (treesit-query-compile
-                        'q
-                        '((comment) @comment
-                          (comment_block) @comment_block
-                          (newline_extra) @newline_extra
-                          (shebang) @shebang)
-                        t))
+                     (treesit-query-compile
+                      'q
+                      '((comment) @comment
+                        (comment_block) @comment_block
+                        (newline_extra) @newline_extra
+                        (shebang) @shebang)
+                      t)
                      nil
                      nil
                      t))
