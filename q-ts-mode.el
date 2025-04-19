@@ -1,8 +1,16 @@
 ;;; q-ts-mode.el --- Tree-sitter q mode
 
+;; Author: Justin Yu
+;; Homepage: https://github.com/Gchouchou/q-ts-mode
+;; Created 14 Jan 2025
+;; Version: 0.1
+
 ;;; Commentary:
 
 ;;; q-mode but using tree-sitter grammar
+
+;;; Requirements:
+;;; Package-Requires: ((emacs "29.1") (q-mode) (q-capf) (flycheck))
 
 ;;; Code:
 (require 'q-mode)

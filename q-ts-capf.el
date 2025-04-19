@@ -1,6 +1,15 @@
 ;;; q-ts-capf.el --- Completion at Point Powered by Treesitter
+
+;; Author: Justin Yu
+;; Homepage: https://github.com/Gchouchou/q-ts-mode
+;; Created 14 Jan 2025
+;; Version: 0.1
+
 ;;; Commentary:
-;;;
+
+;;; Requirements:
+;;; Package-Requires: ((emacs "29.1") (q-ts-mode) (q-capf))
+
 ;;; Code:
 (require 'q-capf)
 (require 'q-ts-mode)

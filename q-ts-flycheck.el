@@ -1,8 +1,16 @@
 ;;; q-ts-flycheck.el --- Tree-sitter q mode linter
 
+;; Author: Justin Yu
+;; Homepage: https://github.com/Gchouchou/q-ts-mode
+;; Created 14 Jan 2025
+;; Version: 0.1
+
 ;;; Commentary:
 
 ;;; Adds a flycheck linter for q powered by treesitter
+
+;;; Requirements:
+;;; Package-Requires: ((emacs "29.1") (q-ts-mode) (flycheck))
 
 ;;; Code:
 (require 'treesit)
