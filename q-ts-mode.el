@@ -392,8 +392,7 @@ Analog to `q-strip' but leverages tree-sitter."
     (treesit-parser-create 'q)
     (q-ts-setup))
   ;; Do not edit k files with treesitter mode
-  (add-to-list 'auto-mode-alist '("\\.q\\'" . q-ts-mode))
-  (add-to-list 'org-src-lang-modes '("q" . q-ts-mode)))
+  (add-to-list 'auto-mode-alist '("\\.q\\'" . q-ts-mode)))
 
 (provide 'q-ts-mode)
 
