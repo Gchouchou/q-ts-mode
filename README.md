@@ -35,6 +35,6 @@ You can achieve this by customizing `org-src-lang-modes`. Add the following
 to config file:
 
 ``` emacs-lisp
+(require 'org) ; this loads org which is a huge package
 (add-to-list 'org-src-lang-modes '("q" . q-ts))
 ```
-
