@@ -10,7 +10,7 @@
 ;;; q-mode but using tree-sitter grammar
 
 ;;; Requirements:
-;;; Package-Requires: ((emacs "29.1") (q-mode) (q-capf) (flycheck))
+;;; Package-Requires: ((emacs "29.1") (q-mode))
 
 ;;; Code:
 (require 'q-mode)
