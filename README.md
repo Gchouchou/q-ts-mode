@@ -11,9 +11,6 @@ This package has the following dependencies:
 - treesitter parser of the kdb/q language: https://github.com/Gchouchou/tree-sitter-q
 - [q-mode](https://github.com/psaris/q-mode)
 
-The q-ts-capf file requires https://github.com/Gchouchou/q-capf
-for a table column name completion.
-
 # Overriding q-mode
 
 To override `q-mode` with `q-ts-mode` you can add the following for the init file.
