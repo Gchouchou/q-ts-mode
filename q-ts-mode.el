@@ -272,6 +272,7 @@
 (defvar q-ts--syntax-query
   (treesit-query-compile 'q
                          '((string) @string
+                           (char) @string
                            (comment) @comment
                            (comment_block) @comment)))
 
