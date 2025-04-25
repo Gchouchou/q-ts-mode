@@ -244,6 +244,46 @@
     ;;   (:pred q-ts--anti-assignment @underline)))
     ))
 
+(defvar q-ts--indent-rules
+  `((q
+     ;; last comment block has to be 0 aligned
+     ;; might as well make them all 0 aligned
+     ((parent-is "comment_block") column-0 0)
+     ;; some insane query to catch multiline commands
+     ;;((query (((progn output: (_)) :anchor (newline_extra) :anchor (_) @catch))) parent ,q-indent-step)
+     ;; all the closers are on same line as inside
+     ((parent-is "parameter_pass") parent-bol ,q-indent-step)
+     ((parent-is "bracket_progn") parent-bol ,q-indent-step)
+     ((parent-is "parenthesis_exp") parent-bol ,q-indent-step)
+     ((parent-is "definition") parent-bol ,q-indent-step)
+     ((parent-is "table_keys") parent ,q-indent-step)
+     ((parent-is "list") parent ,q-indent-step)
+     ((parent-is "program") column-0 0)
+     ;; progn is start of line
+     ((node-is "^progn$") parent-bol 0)
+     ;; no indent at start of program
+     ((parent-is "func_app") parent-bol q-ts--check-indent)
+     ;; semicolon should keep indentation
+     ((node-is "newline_extra") parent-bol 0)
+     ;; default
+     (no-node parent-bol q-ts--check-syscmd)
+     ((query ((_ (_) @child ))) parent 0))))
+
+(defun q-ts--syntax-propertize (beg end)
+  (let ((captures (treesit-query-capture 'q
+                                         '((string) @string
+                                           (comment) @comment
+                                           (comment_block) @comment)
+                                         beg end)))
+    (pcase-dolist (`(,name . ,node) captures)
+      (let* ((ns (treesit-node-start node))
+             (ne (treesit-node-end node))
+             (syntax (pcase-exhaustive name
+                       ('string (string-to-syntax "|"))
+                       ('comment (string-to-syntax "!")))))
+        (put-text-property ns (1+ ns) 'syntax-table syntax)
+        (put-text-property (1- ne) ne 'syntax-table syntax)))))
+
 ;; rerun this if it doesn't work
 (defun q-ts-setup ()
   "Setup treesit for q-ts-mode."
@@ -255,6 +295,13 @@
               (apply #'treesit-font-lock-rules
                      q-ts-font-lock-rules))
 
+  ;; comments
+  (setq-local comment-start q-comment-start)
+  (setq-local comment-start-skip "\\(^\\|[ \t]\\)\\(/+[ \t]*\\)")
+  (setq-local comment-end "")
+
+  (setq-local syntax-propertize-function #'q-ts--syntax-propertize)
+
   ;; we need to define levels ourselves
   (setq-local treesit-font-lock-feature-list
               '(( comment string ) ( constant number builtin keyword )
@@ -262,30 +309,7 @@
                 ( local-variable invalid assignment )))
 
   ;; indentation rules
-  (setq-local treesit-simple-indent-rules
-              `((q
-                 ;; last comment block has to be 0 aligned
-                 ;; might as well make them all 0 aligned
-                 ((parent-is "comment_block") column-0 0)
-                 ;; some insane query to catch multiline commands
-                 ;;((query (((progn output: (_)) :anchor (newline_extra) :anchor (_) @catch))) parent ,q-indent-step)
-                 ;; all the closers are on same line as inside
-                 ((parent-is "parameter_pass") parent-bol ,q-indent-step)
-                 ((parent-is "parenthesis_exp") parent-bol ,q-indent-step)
-                 ((parent-is "definition") parent-bol ,q-indent-step)
-                 ((parent-is "table_keys") parent ,q-indent-step)
-                 ((parent-is "list") parent ,q-indent-step)
-                 ((parent-is "program") column-0 0)
-                 ;; progn is start of line
-                 ((node-is "progn") parent-bol 0)
-                 ;; no indent at start of program
-                 ((parent-is "func_app") parent-bol q-ts--check-indent)
-                 ;; semicolon should keep indentation
-                 ((node-is "newline_extra") parent-bol 0)
-                 ;; default
-                 (no-node parent-bol q-ts--check-syscmd)
-                 ((query ((_ (_) @child ))) parent 0)
-                 )))
+  (setq-local treesit-simple-indent-rules q-ts--indent-rules)
 
   ;; This resets everything
   (treesit-major-mode-setup))
