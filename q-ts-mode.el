@@ -269,11 +269,16 @@
      (no-node parent-bol q-ts--check-syscmd)
      ((query ((_ (_) @child ))) parent 0))))
 
+(defvar q-ts--syntax-query
+  (treesit-query-compile 'q
+                         '((string) @string
+                           (comment) @comment
+                           (comment_block) @comment)))
+
+
 (defun q-ts--syntax-propertize (beg end)
   (let ((captures (treesit-query-capture 'q
-                                         '((string) @string
-                                           (comment) @comment
-                                           (comment_block) @comment)
+                                         q-ts--syntax-query
                                          beg end)))
     (pcase-dolist (`(,name . ,node) captures)
       (let* ((ns (treesit-node-start node))
