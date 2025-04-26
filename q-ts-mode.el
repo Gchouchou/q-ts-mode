@@ -344,6 +344,14 @@ BOL is the position."
       q-indent-step
     0))
 
+(defvar q-ts--strip-query
+  (treesit-query-compile
+   'q
+   '((comment) @comment
+     (comment_block) @comment_block
+     (newline_extra) @newline_extra
+     (shebang) @shebang)))
+
 (defun q-ts-strip (text)
   "Strip TEXT of all comments, collapse expressions.
 Analog to `q-strip' but leverages tree-sitter."
@@ -351,14 +359,8 @@ Analog to `q-strip' but leverages tree-sitter."
     (insert text)
     (let* ((shift 0)
            (capture (treesit-query-capture
-                     (treesit-buffer-root-node 'q)
-                     (treesit-query-compile
-                      'q
-                      '((comment) @comment
-                        (comment_block) @comment_block
-                        (newline_extra) @newline_extra
-                        (shebang) @shebang)
-                      t)
+                     'q
+                     q-ts--strip-query
                      nil
                      nil
                      t))
