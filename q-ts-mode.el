@@ -90,17 +90,15 @@
                                                   (regexp-opt
                                                   '("func_definition" "progn" "parameter_pass"))))
                                                type))))))
-        (if-let ((param (and (string= "func_definition"
-                                      (treesit-node-type parent))
-                             (treesit-node-child-by-field-name parent "parameters"))))
-            (treesit-filter-child param (lambda (child)
-                                          (and (string=
-                                                "variable"
-                                                (treesit-node-type child))
-                                               (string= var (treesit-node-text child))))
-                                  t)
-          (string-match-p "^\\(x\\|y\\|z\\)$" var))
-        ))))
+        (when (string= "func_definition" (treesit-node-type parent))
+          (if-let ((param (treesit-node-child-by-field-name parent "parameters")))
+              (treesit-filter-child param (lambda (child)
+                                            (and (string=
+                                                  "variable"
+                                                  (treesit-node-type child))
+                                                 (string= var (treesit-node-text child))))
+                                    t)
+            (string-match-p "^\\(x\\|y\\|z\\)$" var)))))))
 
 (defun q-ts--not-func (node)
   "Anti match NODE type with func_definition."
