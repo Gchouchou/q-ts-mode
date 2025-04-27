@@ -232,7 +232,7 @@
      ;; table columns look nicer without the indent
      ((parent-is "^table_columns$") parent 0)
      ;; default indent
-     ((parent-is "") parent ,q-indent-step))))
+     (catch-all parent ,q-indent-step))))
 
 (defvar q-ts--syntax-query
   (treesit-query-compile 'q
