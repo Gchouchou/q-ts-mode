@@ -304,6 +304,7 @@ Analog to `q-strip' but leverages tree-sitter."
                      nil
                      nil
                      t))
+           ;; TODO: try deleting bounds directly instead of accumulating then deleting
            (bounds (mapcar
                     (lambda (node)
                       (cons (treesit-node-start node) (treesit-node-end node)))
