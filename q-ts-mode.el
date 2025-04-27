@@ -172,8 +172,6 @@
     :language q
     :feature infix-mod
     ((infix_mod_func
-      function: (variable
-                element: (identifier) @font-lock-function-call-face)
       modifier: (_) @font-lock-preprocessor-face))
 
     ;; escape sequences
