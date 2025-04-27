@@ -247,25 +247,12 @@
      ;; last comment block has to be 0 aligned
      ;; might as well make them all 0 aligned
      ((parent-is "comment_block") column-0 0)
-     ;; some insane query to catch multiline commands
-     ;;((query (((progn output: (_)) :anchor (newline_extra) :anchor (_) @catch))) parent ,q-indent-step)
-     ;; all the closers are on same line as inside
-     ((parent-is "parameter_pass") parent-bol ,q-indent-step)
-     ((parent-is "bracket_progn") parent-bol ,q-indent-step)
-     ((parent-is "parenthesis_exp") parent-bol ,q-indent-step)
-     ((parent-is "definition") parent-bol ,q-indent-step)
-     ((parent-is "table_keys") parent ,q-indent-step)
-     ((parent-is "list") parent ,q-indent-step)
+     ((parent-is "table_columns") parent 0)
      ((parent-is "program") column-0 0)
-     ;; progn is start of line
-     ((node-is "^progn$") parent-bol 0)
-     ;; no indent at start of program
-     ((parent-is "func_app") parent-bol q-ts--check-indent)
-     ;; semicolon should keep indentation
-     ((node-is "newline_extra") parent-bol 0)
+     ((parent-is "^progn$") column-0 0)
      ;; default
      (no-node parent-bol q-ts--check-syscmd)
-     ((query ((_ (_) @child ))) parent 0))))
+     ((parent-is "") parent ,q-indent-step))))
 
 (defvar q-ts--syntax-query
   (treesit-query-compile 'q
@@ -273,7 +260,6 @@
                            (char) @string
                            (comment) @comment
                            (comment_block) @comment)))
-
 
 (defun q-ts--syntax-propertize (beg end)
   (let ((captures (treesit-query-capture 'q
@@ -317,20 +303,6 @@
 
   ;; This resets everything
   (treesit-major-mode-setup))
-
-(defun q-ts--check-indent (node parent bol)
-  "Return 0 if parent line is already indented or `q-indent-step' otherwise.
-
-NODE is the node that should be indented.
-
-PARENT is the parent of NODE.
-BOL is position of buffer."
-  (save-excursion
-    (goto-char (treesit-node-start parent))
-    (goto-char (pos-bol))
-    (if (string-match-p "[ \t]" (buffer-substring (point) (+ (point) 1)))
-        0
-      q-indent-step)))
 
 (defun q-ts--check-syscmd (node parent bol)
   "Return 0 if not in shell command node else return `q-indent-step'.
