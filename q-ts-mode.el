@@ -55,18 +55,6 @@
                "." "@" "?" "|" "&" ","
                "-")))))
 
-(defun q-ts--anti-assignment (node)
-  "Anti matches assignment NODE."
-  (not
-   (and (string= "func_app"
-                 (treesit-node-type node))
-        (when-let* ((func (treesit-node-child-by-field-name node "function"))
-                    (type (treesit-node-type func)))
-          (or (string= "no_comma_assignment_func" type)
-              (string= "assignment_func" type)))
-        (when-let* ((param1 (treesit-node-child-by-field-name node "parameter1")))
-          (string= "variable" (treesit-node-type param1))))))
-
 (defvar q-ts--closure-nodes
   (eval-when-compile
     (regexp-opt
@@ -231,16 +219,7 @@
                     (variable) @font-lock-variable-name-face
                     :anchor (semicolon) :anchor
                     (_) @value :anchor))
-      (:pred q-ts--not-func @value)))
-
-    ;; last expression in progn but does not match assignment
-    ;; :language q
-    ;; :feature output
-    ;; :override append
-    ;; (((progn
-    ;;    output: (_) @underline)
-    ;;   (:pred q-ts--anti-assignment @underline)))
-    ))
+      (:pred q-ts--not-func @value)))))
 
 (defvar q-ts--indent-rules
   `((q
