@@ -224,11 +224,14 @@
      ;; last comment block has to be 0 aligned
      ;; might as well make them all 0 aligned
      ;; program and progn should always be 0 aligned
-     ((parent-is "^comment_block$\\|^program$\\|^progn$") column-0 0)
+     ((parent-is ,(format
+                   "^%s$"
+                   (regexp-opt
+                    '("comment_block" "program" "progn"))))
+      column-0 0)
      ;; table columns look nicer without the indent
-     ((parent-is "table_columns") parent 0)
+     ((parent-is "^table_columns$") parent 0)
      ;; default indent
-     (no-node parent-bol q-ts--check-syscmd)
      ((parent-is "") parent ,q-indent-step))))
 
 (defvar q-ts--syntax-query
@@ -280,16 +283,6 @@
 
   ;; This resets everything
   (treesit-major-mode-setup))
-
-(defun q-ts--check-syscmd (node parent bol)
-  "Return 0 if not in shell command node else return `q-indent-step'.
-
-NODE is nil.
-PARENT is nil.
-BOL is the position."
-  (if (string= "shell_command"(treesit-node-type (treesit-node-at bol)))
-      q-indent-step
-    0))
 
 (defvar q-ts--strip-query
   (treesit-query-compile
