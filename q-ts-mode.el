@@ -246,11 +246,11 @@
   `((q
      ;; last comment block has to be 0 aligned
      ;; might as well make them all 0 aligned
-     ((parent-is "comment_block") column-0 0)
+     ;; program and progn should always be 0 aligned
+     ((parent-is "^comment_block$\\|^program$\\|^progn$") column-0 0)
+     ;; table columns look nicer without the indent
      ((parent-is "table_columns") parent 0)
-     ((parent-is "program") column-0 0)
-     ((parent-is "^progn$") column-0 0)
-     ;; default
+     ;; default indent
      (no-node parent-bol q-ts--check-syscmd)
      ((parent-is "") parent ,q-indent-step))))
 
