@@ -172,7 +172,7 @@
     :language q
     :feature infix-mod
     ((infix_mod_func
-      modifier: (_) @font-lock-preprocessor-face))
+      modifier: (_) @font-lock-function-call-face))
 
     ;; escape sequences
     :language q
