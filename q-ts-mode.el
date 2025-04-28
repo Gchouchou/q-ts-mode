@@ -230,7 +230,7 @@
                     '("comment_block" "program" "progn"))))
       column-0 0)
      ;; table columns look nicer without the indent
-     ((parent-is "^table_columns$") parent 0)
+     ((parent-is "^table_columns$\\|^func_body$") parent 0)
      ;; default indent
      (catch-all parent ,q-indent-step))))
 
