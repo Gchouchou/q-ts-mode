@@ -76,7 +76,7 @@
                                                  (format
                                                   "^%s$"
                                                   (regexp-opt
-                                                  '("func_definition" "progn" "parameter_pass"))))
+                                                  '("func_definition" "progn"))))
                                                type))))))
         (when (string= "func_definition" (treesit-node-type parent))
           (if-let ((param (treesit-node-child-by-field-name parent "parameters")))
