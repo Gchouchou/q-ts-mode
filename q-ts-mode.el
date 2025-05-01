@@ -235,8 +235,20 @@
                   (regexp-opt
                    '("table_columns" "func_body"))))
       parent 0)
+     ;; matches multiline nodes e.g. comments and shell command
+     (no-node parent-bol q-ts--check-syscmd)
      ;; default indent
      (catch-all parent ,q-indent-step))))
+
+(defun q-ts--check-syscmd (node parent bol)
+  "Return 0 if not in shell command node else return `q-indent-step'.
+
+NODE is nil.
+PARENT is nil.
+BOL is the position."
+  (if (string= "shell_command" (treesit-node-type (treesit-node-at bol)))
+      q-indent-step
+    0))
 
 (defvar q-ts--syntax-query
   (treesit-query-compile 'q
