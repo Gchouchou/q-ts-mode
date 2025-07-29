@@ -233,7 +233,7 @@
      ((parent-is ,(format
                   "^%s$"
                   (regexp-opt
-                   '("table_columns" "func_body" "table_conditions"))))
+                   '("table_columns" "func_body"))))
       parent 0)
      ;; matches multiline nodes e.g. comments and shell command
      (no-node parent-bol q-ts--check-syscmd)
