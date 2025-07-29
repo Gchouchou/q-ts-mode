@@ -146,7 +146,8 @@
     :feature keyword
     :override t
     (((variable) @font-lock-keyword-face (:match ,q-ts-keywords @font-lock-keyword-face))
-     (sql_expression [ "distinct" "select" "exec" "delete" "update" "by" "from" "where" ] @font-lock-keyword-face)
+     (sql_expression [ "distinct" "select" "exec" "delete" "update" "by" "from" ] @font-lock-keyword-face)
+     (table_conditions "where" @font-lock-keyword-face)
      ((builtin_infix_func) @font-lock-keyword-face (:match ,q-ts-keywords @font-lock-keyword-face)))
 
     ;; q operator functions
