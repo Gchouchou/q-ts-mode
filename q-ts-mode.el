@@ -240,23 +240,42 @@
      (no-node parent-bol q-ts--check-syscmd)
      ;; function bodies need special treatment
      (q-ts--func-body-assigned grand-parent ,q-indent-step)
+     (q-ts--func-body-curry-assigned great-grand-parent ,q-indent-step)
      ;; default indent
      (catch-all parent ,q-indent-step))))
 
 (defun q-ts--func-body-assigned (node parent bol)
-  "Return 1 if the parent was a function definition and assigned.
+  "Return non-nil if the parent was a function definition and assigned.
 NODE is any.
 PARENT is function_definition and grandparent is func_app
 with assignment_func being the function.
 BOL is not used."
-   (and parent
-        (string-match-p "^func_definition$" (treesit-node-type parent))
-        (treesit-node-parent parent)
-        (string-match-p "^func_app$" (treesit-node-type (treesit-node-parent parent)))
-        (string-match-p "^assignment_func$" (treesit-node-type
-                                             (treesit-node-child-by-field-name
-                                              (treesit-node-parent parent)
-                                              "function")))))
+  (when (and parent (string-match-p "^func_definition$" (treesit-node-type parent)))
+    (q-ts--check-assigned parent)))
+
+(defun q-ts--check-assigned (node)
+  "Check if parent of NODE is function app with assignment function."
+  (when-let* ((parent (treesit-node-parent node)))
+    (and (string-match-p "^func_app$" (treesit-node-type parent))
+         (string-match-p "^assignment_func$" (treesit-node-type
+                                              (treesit-node-child-by-field-name
+                                               parent
+                                               "function"))))))
+
+(defun q-ts--func-body-curry-assigned (node parent bol)
+  "Return non-nil if the parent was a function definition and assigned.
+NODE is any.
+PARENT is function_definition and grandparent is func_app with a parameter pass,
+then grand parent is tested for being a func_app with assignment function
+BOL is not used."
+  (when (and parent (string-match-p "^func_definition$" (treesit-node-type parent)))
+    (let* ((g-parent (treesit-node-parent parent)))
+      (and g-parent
+           (string-match-p "^func_app$" (treesit-node-type g-parent))
+           (treesit-node-type (treesit-node-child-by-field-name
+                               g-parent
+                               "parameters"))
+           (q-ts--check-assigned g-parent)))))
 
 (defun q-ts--check-syscmd (node parent bol)
   "Return 0 if not in shell command node else return `q-indent-step'.
