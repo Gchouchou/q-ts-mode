@@ -238,6 +238,8 @@
       parent 0)
      ;; matches multiline nodes e.g. comments and shell command
      (no-node parent-bol q-ts--check-syscmd)
+     ;; parameter pass sometimes looks better when inline with function
+     (q-ts--parameter-pass-g-align grand-parent ,q-indent-step)
      ;; function bodies need special treatment
      (q-ts--func-body-assigned grand-parent ,q-indent-step)
      (q-ts--func-body-curry-assigned great-grand-parent ,q-indent-step)
@@ -286,6 +288,21 @@ BOL is the position."
   (if (string= "shell_command" (treesit-node-type (treesit-node-at bol)))
       q-indent-step
     0))
+
+(defun q-ts--parameter-pass-g-align (node parent bol)
+  "Return non-nil if PARENT is parameter_pass node and has newline as second child.
+
+NODE is any.
+PARENT is parameter_pass.
+BOL is not used."
+  (when (and parent (string= "parameter_pass" (treesit-node-type parent)))
+    (let* ((start (treesit-node-start parent))
+           (child (cadr (treesit-filter-child parent
+                                              (lambda (child)
+                                                (not (string-match-p
+                                                      "comment"
+                                                      (treesit-node-type child))))))))
+      (string-match-p "newline_extra" (treesit-node-type child)))))
 
 (defvar q-ts--syntax-query
   (treesit-query-compile 'q
