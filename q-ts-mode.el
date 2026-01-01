@@ -66,7 +66,7 @@
   (let ((var (treesit-node-text variable t)))
     (unless (or (string-match-p q-keywords var)
                 (string-match-p q-ts-builtin-words var)
-                (string-match-p q-constant-words var))
+                (string-match-p q-builtin-dot-z-words var))
       (let ((parent (treesit-parent-until
                            variable
                            ;; func_definition or progn
@@ -160,7 +160,7 @@
     :language q
     :feature q-constant
     :override t
-    (((variable) @var (:match ,q-constant-words @var)) @font-lock-constant-face)
+    (((variable) @var (:match ,q-builtin-dot-z-words @var)) @font-lock-constant-face)
 
     ;; function application
     :language q
