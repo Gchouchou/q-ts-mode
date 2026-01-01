@@ -11,6 +11,18 @@ This package has the following dependencies:
 - treesitter parser of the kdb/q language: https://github.com/Gchouchou/tree-sitter-q
 - [q-mode](https://github.com/psaris/q-mode)
 
+# Installing Treesitter Grammar
+
+To use this package, the treesitter grammar for kdb/q must be installed. This can be done
+in the following steps:
+
+1. git clone the repo `git clone https://github.com/Gchouchou/tree-sitter-q.git`
+2. run `make` to get a shared object
+3. symlink or copy the shared object to the emacs path
+
+To confirm the grammar is available, evaluate `(treesit-ready-p 'q)` and it
+should return `t`.
+
 # Overriding q-mode
 
 To override `q-mode` with `q-ts-mode` you can add the following for the init file.
