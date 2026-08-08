@@ -61,23 +61,17 @@
      '("func_definition" "progn" "parameter_pass")))
   "A precompiled regex for no reason.")
 
-(defun q-ts--local-var-check (variable)
-  "Check if VARIABLE is a local variable."
+(defun q-ts--local-var-check-p (variable &optional closure)
+  "Check if VARIABLE is a local variable.
+
+Optionally can provide CLOSURE for better performance."
   (let ((var (treesit-node-text variable t)))
     (unless (or (string-match-p q-keywords var)
                 (string-match-p q-ts-builtin-words var)
                 (string-match-p q-builtin-dot-z-words var))
-      (let ((parent (treesit-parent-until
-                           variable
-                           ;; func_definition or progn
-                           (lambda (node)
-                             (let ((type (treesit-node-type node)))
-                               (string-match-p (eval-when-compile
-                                                 (format
-                                                  "^%s$"
-                                                  (regexp-opt
-                                                  '("func_definition" "progn"))))
-                                               type))))))
+      (let ((parent (or closure (treesit-parent-until
+                                 variable
+                                 "func_definition\\|progn"))))
         (when (string= "func_definition" (treesit-node-type parent))
           (if-let ((param (treesit-node-child-by-field-name parent "parameters")))
               (treesit-filter-child param (lambda (child)
@@ -185,7 +179,7 @@
     :language q
     :feature local-variable
     (((variable) @font-lock-variable-name-face
-      (:pred q-ts--local-var-check @font-lock-variable-name-face)))
+      (:pred q-ts--local-var-check-p @font-lock-variable-name-face)))
 
     ;; invalid atoms that will instantly cause an error
     :language q
@@ -433,8 +427,133 @@ Analog to `q-strip' but leverages tree-sitter."
   (when (treesit-ready-p 'q)
     (treesit-parser-create 'q)
     (q-ts-setup))
+  (when (featurep 'xref)
+    (add-hook 'xref-backend-functions #'q-xref-backend nil t))
   ;; Do not edit k files with treesitter mode
   (add-to-list 'auto-mode-alist '("\\.q\\'" . q-ts-mode)))
+
+(defconst q-ts--definition-reference-capture-query
+  (treesit-query-compile
+   'q
+   '((func_app
+      parameter1: (variable) @definition
+      function: (assignment_func))
+     ;; strange definitions of the form :[var;value]
+     (func_app
+      function: (assignment_func)
+      (parameter_pass
+       :anchor
+       (variable) @definition))
+     ;; get references in the same query for performance
+     (variable) @reference))
+  "TS query to scan for references and definitions to build index.")
+
+(defun q-ts--scan-source-in-current-buffer (&optional file)
+    "Return scan artifacts from current buffer, optionally for FILE.
+
+Overrides the equivalent `q-scan-source-in-current-buffer' function in `q-mode'
+by leveraging treesitter parser."
+  (save-excursion
+    (let* ((def-index (make-hash-table :test #'equal))
+           (ref-index (make-hash-table :test #'equal))
+           (symbols nil)
+           (capture
+            (treesit-query-capture 'q q-ts--definition-reference-capture-query))
+           ;; lists to hold definition and reference nodes
+           (definitions nil)
+           (references nil)
+           (lambdas (make-hash-table :test #'equal)))
+      ;; split definitions and references
+      (cl-loop for (c . node) in capture
+               do (if (eq c 'definition)
+                      (push node definitions)
+                    (push node references)))
+      ;; all definitions are references
+      (setq references (cl-set-difference references definitions))
+      (dolist (def definitions)
+        ;; ignore cases where definitions are inside sql statements and
+        ;; table definitions
+        (let* ((prev_node def)
+               (closure
+                (treesit-parent-until
+                 def
+                 ;; func_definition or progn or sql_expression
+                 (lambda (node)
+                   (let ((type (treesit-node-type node)))
+                     (pcase type
+                       ("sql_expression"
+                        (prog1 (not (equal prev_node (treesit-node-child-by-field-name node "table")))
+                          (setq prev_node node)))
+                       ("table_definition"
+                        ;; we only care if the immediate parent is a table_definition
+                        (prog1 (equal (treesit-parent-until
+                                       (treesit-parent-until def "func_app")
+                                       ;; skip all the parenthesis nodes
+                                       (lambda (node)
+                                         (not (string= (treesit-node-type node) "parenthesis_exp"))))
+                                      node)
+                          (setq prev_node node)))
+                       ("progn" t)
+                       ("func_definition" t)
+                       (_ (setq prev_node node) nil))))))
+               (closure-type (treesit-node-type closure)))
+          (cond
+            ;; sql and table_definition are skipped
+           ((string-match-p "sql_expression\\|table_definition" closure-type))
+            ;; valid definition should be in progn or global def in func_def
+           ((or (string= closure-type "progn")
+                (and (string= closure-type "func_definition")
+                     (string= (treesit-node-text (treesit-node-child-by-field-name
+                                                  (treesit-parent-until def "func_app")
+                                                  "function"))
+                              "::")))
+            (let* ((name (treesit-node-text def t))
+                   (def-pos (treesit-node-start def))
+                   (canonical (q--canonicalize-name nil name))
+                   (meta (list
+                          :pos def-pos
+                          :line (line-number-at-pos def-pos)
+                          :summary (save-excursion (goto-char def-pos)
+                                                   (buffer-substring-no-properties
+                                                    (line-beginning-position)
+                                                    (line-end-position)))))
+                   (doc "")       ; unused
+                   (signature "") ; unused
+                   (entry (q--make-entry meta doc signature file)))
+              (puthash canonical (cons entry (gethash canonical def-index)) def-index)
+              (push canonical symbols)))
+           ((string= "func_definition" closure-type)
+            (let* ((name (treesit-node-text def t))
+                   (entries (gethash closure lambdas)))
+              ;; add name to ignored list unless already present
+              (cl-pushnew name entries :test #'equal)
+              (puthash closure entries lambdas))))))
+      (dolist (ref references)
+        (let ((closure (treesit-parent-until
+                        ref
+                        "func_definition\\|progn"))
+              (name (treesit-node-text ref t)))
+          (unless (or (member name (gethash closure lambdas))
+                      (q-ts--local-var-check-p ref closure))
+              (let* ((ref-pos (treesit-node-start ref))
+                     (canonical (q--canonicalize-name nil name))
+                     (meta (list
+                            :pos ref-pos
+                            :line (line-number-at-pos ref-pos)
+                            :summary (save-excursion (goto-char ref-pos)
+                                                     (buffer-substring-no-properties
+                                                      (line-beginning-position)
+                                                      (line-end-position)))))
+                     (entry (q--make-entry meta nil nil file)))
+                (puthash canonical (cons entry (gethash canonical ref-index)) ref-index)))))
+
+      (dolist (index (list def-index ref-index))
+        (maphash (lambda (name entries) (puthash name (nreverse entries) index)) index))
+      (list :definitions def-index
+            :references ref-index
+            :symbols (delete-dups symbols)))))
+
+(advice-add 'q--scan-source-in-current-buffer :override #'q-ts--scan-source-in-current-buffer)
 
 (provide 'q-ts-mode)
 
