@@ -429,6 +429,10 @@ Analog to `q-strip' but leverages tree-sitter."
     (q-ts-setup))
   (when (featurep 'xref)
     (add-hook 'xref-backend-functions #'q-xref-backend nil t))
+  (add-hook 'after-save-hook #'q--schedule-rescan nil t)
+  (add-hook 'after-revert-hook #'q--schedule-rescan nil t)
+  ;; Evict the shared project cache when the last buffer for a project closes.
+  (add-hook 'kill-buffer-hook #'q--maybe-evict-project-cache nil t)
   ;; Do not edit k files with treesitter mode
   (add-to-list 'auto-mode-alist '("\\.q\\'" . q-ts-mode)))
 
