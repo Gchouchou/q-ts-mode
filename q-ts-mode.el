@@ -449,7 +449,18 @@ Analog to `q-strip' but leverages tree-sitter."
        :anchor
        (variable) @definition))
      ;; get references in the same query for performance
-     (variable) @reference))
+     (variable) @reference
+     ;; capture `var set value form
+     (func_app
+      parameter1: (symbol (regular_symbol)) @global_definition
+      function: (builtin_infix_func) @infix_func
+      (:equal @infix_func "set"))
+     (func_app
+      function: (builtin_infix_func) @infix_func
+      (parameter_pass
+       :anchor
+       (symbol (regular_symbol)) @global_definition)
+      (:equal @infix_func "set"))))
   "TS query to scan for references and definitions to build index.")
 
 (defun q-ts--scan-source-in-current-buffer (&optional file)
@@ -469,9 +480,25 @@ by leveraging treesitter parser."
            (lambdas (make-hash-table :test #'equal)))
       ;; split definitions and references
       (cl-loop for (c . node) in capture
-               do (if (eq c 'definition)
-                      (push node definitions)
-                    (push node references)))
+               do (pcase c
+                    ('definition (push node definitions))
+                    ('reference (push node references))
+                    ('global_definition
+                     (let* ((name (substring (treesit-node-text node t) 1))
+                            (def-pos (treesit-node-start node))
+                            (canonical (q--canonicalize-name nil name))
+                            (meta (list
+                                   :pos def-pos
+                                   :line (line-number-at-pos def-pos)
+                                   :summary (save-excursion (goto-char def-pos)
+                                                            (buffer-substring-no-properties
+                                                             (line-beginning-position)
+                                                             (line-end-position)))))
+                            (doc "")       ; unused
+                            (signature "") ; unused
+                            (entry (q--make-entry meta doc signature file)))
+                       (puthash canonical (cons entry (gethash canonical def-index)) def-index)
+                       (push canonical symbols)))))
       ;; all definitions are references
       (setq references (cl-set-difference references definitions))
       (dolist (def definitions)
