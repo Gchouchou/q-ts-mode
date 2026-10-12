@@ -314,7 +314,7 @@ BOL is not used."
                          '((string) @string
                            (char) @string
                            (comment) @comment
-                           (comment_block) @comment)))
+                           (comment_block) @comment_block)))
 
 (defun q-ts--syntax-propertize (beg end)
   (let ((captures (treesit-query-capture 'q
@@ -322,12 +322,18 @@ BOL is not used."
                                          beg end)))
     (pcase-dolist (`(,name . ,node) captures)
       (let* ((ns (treesit-node-start node))
-             (ne (treesit-node-end node))
-             (syntax (pcase-exhaustive name
-                       ('string (string-to-syntax "|"))
-                       ('comment (string-to-syntax "!")))))
-        (put-text-property ns (1+ ns) 'syntax-table syntax)
-        (put-text-property (1- ne) ne 'syntax-table syntax)))))
+             (ne (treesit-node-end node)))
+        (pcase-exhaustive name
+          ('string (let ((syntax (string-to-syntax "|")))
+                     (put-text-property ns (1+ ns) 'syntax-table syntax)
+                     (put-text-property (1- ne) ne 'syntax-table syntax)))
+          ('comment (let ((syntax (string-to-syntax "!")))
+                     (put-text-property ns (1+ ns) 'syntax-table syntax)
+                     (put-text-property ne (1+ ne) 'syntax-table syntax)))
+          ;; TODO revise comment blocks syntax boundaries
+          ('comment_block (let ((syntax (string-to-syntax "!")))
+                     (put-text-property ns (1+ ns) 'syntax-table syntax)
+                     (put-text-property (1- ne) ne 'syntax-table syntax))))))))
 
 ;; rerun this if it doesn't work
 (defun q-ts-setup ()
