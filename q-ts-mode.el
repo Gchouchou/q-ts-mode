@@ -443,9 +443,7 @@ Analog to `q-strip' but leverages tree-sitter."
   (add-hook 'after-save-hook #'q--schedule-rescan nil t)
   (add-hook 'after-revert-hook #'q--schedule-rescan nil t)
   ;; Evict the shared project cache when the last buffer for a project closes.
-  (add-hook 'kill-buffer-hook #'q--maybe-evict-project-cache nil t)
-  ;; Do not edit k files with treesitter mode
-  (add-to-list 'auto-mode-alist '("\\.q\\'" . q-ts-mode)))
+  (add-hook 'kill-buffer-hook #'q--maybe-evict-project-cache nil t))
 
 (defconst q-ts--definition-reference-capture-query
   (treesit-query-compile
@@ -596,6 +594,9 @@ by leveraging treesitter parser."
             :symbols (delete-dups symbols)))))
 
 (advice-add 'q--scan-source-in-current-buffer :override #'q-ts--scan-source-in-current-buffer)
+
+;; Do not edit k files with treesitter mode
+(add-to-list 'auto-mode-alist '("\\.q\\'" . q-ts-mode))
 
 (provide 'q-ts-mode)
 
