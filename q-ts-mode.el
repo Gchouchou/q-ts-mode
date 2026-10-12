@@ -45,6 +45,17 @@
                 "view" "views" "vs" "where" "wj" "wj1" "ww" "xasc" "xbar" "xcol" "xcols" "xdesc"
                 "xgroup" "xkey" "xlog" "xprev" "xrank")))))
 
+(defconst q-ts-constant-words
+  (eval-when-compile
+    (format "^%s$"
+            (regexp-opt
+             '(".z.D" ".z.H" ".z.K" ".z.N" ".z.P" ".z.T" ".z.W" ".z.X" ".z.Z" ".z.a"
+               ".z.ac" ".z.b" ".z.bm" ".z.c" ".z.d" ".z.e" ".z.ex" ".z.exit"
+               ".z.ey" ".z.f" ".z.h" ".z.i" ".z.k" ".z.l" ".z.n" ".z.o" ".z.p"
+               ".z.pc" ".z.pd" ".z.pg" ".z.ph" ".z.pi" ".z.pm" ".z.po" ".z.pp"
+               ".z.pq" ".z.ps" ".z.pw" ".z.q" ".z.r" ".z.s" ".z.t" ".z.ts" ".z.u"
+               ".z.vs" ".z.w" ".z.wc" ".z.wo" ".z.ws" ".z.x" ".z.z" ".z.zd")))))
+
 (defconst q-ts-operator-words
   (eval-when-compile
     (format "^%s$"
@@ -154,7 +165,7 @@ Optionally can provide CLOSURE for better performance."
     :language q
     :feature q-constant
     :override t
-    (((variable) @var (:match ,q-builtin-dot-z-words @var)) @font-lock-constant-face)
+    (((variable) @var (:match ,q-ts-constant-words @var)) @font-lock-constant-face)
 
     ;; function application
     :language q
